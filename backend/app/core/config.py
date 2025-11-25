@@ -1,5 +1,14 @@
-"""Configuration placeholder.
+from pydantic import BaseSettings
 
-This module should read environment variables and expose settings.
-No implementation as requested.
-"""
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "IMDb Clone"
+    MONGO_URL: str
+    SECRET_KEY: str
+    ALGORITHM: str
+    
+    
+    
+    class Config:
+        env_file = ".env"
+        
+settings = Settings()

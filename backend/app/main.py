@@ -1,5 +1,16 @@
-"""
-Entry point placeholder for the FastAPI app.
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from app.core.config import settings
+from app.core.database import connect_to_mongo, close_mongo_connection
 
-Per request, implementation code is omitted — this is only the file scaffold.
-"""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    
+    await connect_to_mongo()
+    yield
+    await close_mongo_connection()
+    
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    lifespan=lifespan
+)
