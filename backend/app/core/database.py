@@ -16,9 +16,9 @@ async def get_database():
 async def connect_to_mongo():
     """Uygulama başlarken çalışacak"""
     db.client = AsyncIOMotorClient(settings.MONGO_URL)
-    print("🟢 MongoDB Bağlantısı Başarılı!")
+    print("MongoDB Bağlantısı Başarılı!")
 
 async def close_mongo_connection():
     """Uygulama kapanırken çalışacak"""
     db.client.close()
-    print("🔴 MongoDB Bağlantısı Kapatıldı.")
+    print("MongoDB Bağlantısı Kapatıldı.")
