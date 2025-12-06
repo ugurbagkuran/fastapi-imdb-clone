@@ -1,9 +1,9 @@
 from fastapi import Depends, HTTPException, status, APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
 from app.core.database import get_database
-from app.core.security import create_access_token
+from app.core.security import create_access_token  # security'den import et
+from .utils import authenticate_user, create_user, get_current_user
 from .schemas import UserCreate, UserLogin, Token, UserResponse
-from .utils import authenticate_user, create_user
 
 
 router = APIRouter()
@@ -33,3 +33,17 @@ async def login_user(
     access_token = create_access_token(data={"sub": str(user["_id"])})
     
     return Token(access_token=access_token, token_type="bearer")
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_info(current_user: dict = Depends(get_current_user)):
+    """Giriş yapmış kullanıcının bilgilerini döndürür."""
+    return UserResponse(
+        _id=str(current_user["_id"]),
+        email=current_user["email"],
+        username=current_user["username"],
+        is_active=current_user["is_active"],
+        role=current_user["role"],
+        created_at=current_user["created_at"]
+    )
+
