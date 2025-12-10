@@ -11,6 +11,7 @@ from .schemas import MovieCreate, MovieDB, MovieUpdate
 
 router = APIRouter()
 
+no_embedding_fields = {"embedding": 0}
 
 # --- GET (Listeleme ve Arama) ---
 @router.get("/", response_description="Filmleri listele ve filtrele", response_model=List[MovieDB])
@@ -34,7 +35,7 @@ async def list_movies(
     if genre:
         search_query["genre"] = genre
 
-    movies_cursor = db["movies"].find(search_query).skip(skip).limit(limit)
+    movies_cursor = db["movies"].find(search_query, no_embedding_fields).skip(skip).limit(limit)
     movies = await movies_cursor.to_list(length=limit)
     return movies
 
@@ -48,7 +49,7 @@ async def create_movie(
 ):
     movie_data = jsonable_encoder(movie)
     new_movie = await db["movies"].insert_one(movie_data)
-    created_movie = await db["movies"].find_one({"_id": new_movie.inserted_id})
+    created_movie = await db["movies"].find_one({"_id": new_movie.inserted_id}, no_embedding_fields)
     return created_movie
 
 
@@ -60,7 +61,7 @@ async def show_movie(id: str, db: AsyncIOMotorClient = Depends(get_database)):
     except InvalidId:
         raise HTTPException(status_code=404, detail="Geçersiz ID formatı.")
 
-    if (movie := await db["movies"].find_one({"_id": oid})) is not None:
+    if (movie := await db["movies"].find_one({"_id": oid}, no_embedding_fields)) is not None:
         return movie
     
     raise HTTPException(status_code=404, detail=f"{id} ID'li film bulunamadı.")
@@ -86,10 +87,10 @@ async def update_movie(
             {"_id": oid}, {"$set": movie_data}
         )
         if update_result.modified_count == 1:
-            if (updated_movie := await db["movies"].find_one({"_id": oid})) is not None:
+            if (updated_movie := await db["movies"].find_one({"_id": oid}, no_embedding_fields)) is not None:
                 return updated_movie
 
-    if (existing_movie := await db["movies"].find_one({"_id": oid})) is not None:
+    if (existing_movie := await db["movies"].find_one({"_id": oid}, no_embedding_fields)) is not None:
         return existing_movie
 
     raise HTTPException(status_code=404, detail=f"{id} ID'li film bulunamadı.")

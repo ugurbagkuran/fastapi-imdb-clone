@@ -13,6 +13,8 @@ class MovieBase(BaseModel):
     cast: List[str] = Field(default=[])
     description: Optional[str] = None
     average_rating: float = Field(default=0.0, ge=0, le=10)
+    poster_url: Optional[str] = None
+    similar_movies: List[PyObjectId] = []  # ObjectId'leri string'e çevir
 
 class MovieCreate(MovieBase):
     pass
@@ -25,6 +27,7 @@ class MovieUpdate(BaseModel):
     cast: Optional[List[str]] = None
     description: Optional[str] = None
     average_rating: Optional[float] = None
+    similar_movies: Optional[List[str]] = None  # Güncelleme için de ekle
 
 class MovieDB(MovieBase):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)

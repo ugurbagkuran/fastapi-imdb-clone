@@ -9,7 +9,8 @@ from .schemas import ReviewCreate, ReviewResponse, ReviewUpdate
 
 router = APIRouter()
 
-
+no_embedding_fields = {"embedding": 0}
+ 
 # --- Yardımcı Fonksiyon ---
 def is_valid_object_id(id_str: str) -> bool:
     """ObjectId formatını kontrol eder."""
@@ -39,7 +40,7 @@ async def create_review(
         )
     
     # Filmin var olup olmadığını kontrol et
-    movie = await db.movies.find_one({"_id": ObjectId(movie_id)})
+    movie = await db.movies.find_one({"_id": ObjectId(movie_id)}, no_embedding_fields)
     if not movie:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
