@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.database import connect_to_mongo, close_mongo_connection
@@ -16,9 +17,30 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     lifespan=lifespan
 )
-app.include_router(reviews_router, prefix="/reviews", tags=["Reviews"])
-app.include_router(movies_router, prefix="/movies", tags=["Movies"])
-app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+
+
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins, # Hangi adreslerden istek gelebilir?
+    allow_credentials=True,
+    allow_methods=["*"],   # GET, POST, PUT, DELETE... hepsine izin ver
+    allow_headers=["*"],   # Tüm başlıklara izin ver
+)
+
+
+
+
+
+app.include_router(reviews_router, prefix="/api/reviews", tags=["Reviews"])
+app.include_router(movies_router, prefix="/api/movies", tags=["Movies"])
+app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 
 # if __name__ == "__main__":
 #     import uvicorn
