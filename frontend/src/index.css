@@ -3,7 +3,53 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-secondary: 243 244 246;
+    /* #f3f4f6 */
+    --color-surface: 255 255 255;
+    /* #ffffff */
+    --color-text: 17 24 39;
+    /* #111827 */
+  }
+
+  .dark {
+    --color-secondary: 20 20 20;
+    /* #141414 */
+    --color-surface: 31 31 31;
+    /* #1f1f1f */
+    --color-text: 229 229 229;
+    /* #e5e5e5 */
+  }
+
   body {
     @apply bg-secondary text-text antialiased tracking-tight;
   }
+}
+
+
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #404040;
+  border-radius: 4px;
+  border: 1px solid #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #606060;
+}
+
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #404040 #0a0a0a;
 }

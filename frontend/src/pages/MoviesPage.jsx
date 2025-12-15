@@ -40,7 +40,7 @@ const MoviesPage = () => {
             <h1 className="text-3xl font-bold mb-8 border-l-4 border-primary pl-4">All Movies</h1>
 
             {loading ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
                     {[...Array(limit)].map((_, i) => (
                         <div key={i} className="aspect-[2/3] bg-surface animate-pulse rounded-xl"></div>
                     ))}
@@ -48,7 +48,7 @@ const MoviesPage = () => {
             ) : (
                 <>
                     {movies.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
                             {movies.map((movie, index) => (
                                 <ScrollReveal key={movie._id || movie.title} delay={(index % 6) * 100}>
                                     <MovieCard movie={movie} />

@@ -42,7 +42,7 @@ const HomePage = () => {
                 {items.length > 0 ? (
                     <div className="flex overflow-x-auto pb-6 gap-6 scrollbar-hide snap-x">
                         {items.map((movie, index) => (
-                            <div key={movie._id || movie.title} className="flex-none w-[160px] md:w-[200px] snap-start">
+                            <div key={movie._id || movie.title} className="flex-none w-[200px] md:w-[240px] snap-start">
                                 <MovieCard movie={movie} />
                             </div>
                         ))}
