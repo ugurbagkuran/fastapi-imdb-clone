@@ -91,7 +91,7 @@ const HomePage = () => {
             ) : (
                 <>
                     <MovieSection id="new-releases" title="New Releases" items={newReleases} delayOffset={100} />
-                    <MovieSection id="trending" title="Trending Now" items={trending} delayOffset={300} />
+
                     <MovieSection id="classics" title="Classics" items={classics} delayOffset={500} />
                 </>
             )}
