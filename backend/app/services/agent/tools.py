@@ -8,7 +8,10 @@ from fastapi.encoders import jsonable_encoder
 from bson import ObjectId
 from fastembed import TextEmbedding
 import numpy as np
-
+import asyncio
+import json
+import hashlib
+from app.core.redis import get_redis, get_cache_version, increment_cache_version
 # --- MODEL YÜKLEME (Lightweight / Hafif Versiyon) ---
 # PyTorch yerine ONNX tabanlı FastEmbed kullanıyoruz.
 # İlk çalıştırmada modeli indirir (~100MB), sonra cache'den kullanır.
@@ -28,9 +31,9 @@ def generate_embedding(text: str) -> List[float]:
     if not text:
         return []
     
-    # FastEmbed liste kabul eder ve generator döner
     embeddings_generator = embedding_model.embed([text]) 
     return list(embeddings_generator)[0].tolist()
+
 
 # --- TOOL 1: SEMANTİK (ANLAMSAL) ARAMA ---
 @tool
@@ -40,6 +43,19 @@ async def semantic_search_movies(user_query: str, limit: int = 5) -> str:
     Örnek: "Hapishaneden kaçışı anlatan hüzünlü filmler" veya "Uzayda geçen macera".
     """
     try:
+        redis = get_redis()
+        cache_key = None
+        
+        # 1. Önbellek Kontrolü
+        if redis:
+            version = await get_cache_version()
+            query_hash = hashlib.md5(user_query.encode()).hexdigest()
+            cache_key = f"semantic:{version}:{query_hash}:{limit}"
+            
+            cached_result = await redis.get(cache_key)
+            if cached_result:
+                return cached_result
+
         db = await get_database()
         
         query_vector = generate_embedding(user_query)
@@ -72,10 +88,17 @@ async def semantic_search_movies(user_query: str, limit: int = 5) -> str:
         for movie in movies:
             movie["_id"] = str(movie["_id"])
             results.append(movie)
+            
+        result_str = str(results)
+        
+        # 2. Önbelleğe Yazma (1 gün)
+        if redis and cache_key:
+            await redis.set(cache_key, result_str, ex=86400)
 
-        return str(results)
+        return result_str
 
     except Exception as e:
+        zaman_a = asyncio.get_event_loop().time()
         print(f"Vector Search failed (likely local MongoDB): {e}. Switching to In-Memory Fallback.")
         try:
             # FALLBACK: Tüm filmleri belleğe çek ve Cosine Similarity hesapla
@@ -113,8 +136,16 @@ async def semantic_search_movies(user_query: str, limit: int = 5) -> str:
 
             # Skora göre sırala (Büyükten küçüğe)
             scored_movies.sort(key=lambda x: x["score"], reverse=True)
+            zaman_b = asyncio.get_event_loop().time()
+            print(f"Fallback semantic search completed in {zaman_b - zaman_a:.2} seconds.")
             
-            return str(scored_movies[:limit])
+            result_str = str(scored_movies[:limit])
+            
+            # Cache Invalidation (Fallback için de cache)
+            if redis and cache_key:
+                 await redis.set(cache_key, result_str, ex=86400)
+            
+            return result_str
 
         except Exception as fallback_error:
             return f"Semantik arama sırasında kritik hata: {str(e)} -> Fallback hatası: {str(fallback_error)}"
@@ -218,6 +249,10 @@ async def add_movie(
         # movie_data["added_by"] = str(current_user["_id"])
 
         result = await db["movies"].insert_one(movie_data)
+        
+        # Cache Invalidation
+        await increment_cache_version()
+        
         return f"'{title}' başarıyla eklendi!"
 
     except Exception as e:

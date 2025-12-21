@@ -8,6 +8,7 @@ from bson.errors import InvalidId
 from app.core.database import get_database
 from app.services.auth.utils import get_current_admin_user, get_current_active_user  # DÜZELTİLDİ
 from .schemas import MovieCreate, MovieDB, MovieUpdate 
+from app.core.redis import increment_cache_version 
 
 router = APIRouter()
 
@@ -50,6 +51,10 @@ async def create_movie(
     movie_data = jsonable_encoder(movie)
     new_movie = await db["movies"].insert_one(movie_data)
     created_movie = await db["movies"].find_one({"_id": new_movie.inserted_id}, no_embedding_fields)
+    
+    # Cache Invalidation
+    await increment_cache_version()
+    
     return created_movie
 
 
@@ -88,6 +93,8 @@ async def update_movie(
         )
         if update_result.modified_count == 1:
             if (updated_movie := await db["movies"].find_one({"_id": oid}, no_embedding_fields)) is not None:
+                # Cache Invalidation
+                await increment_cache_version()
                 return updated_movie
 
     if (existing_movie := await db["movies"].find_one({"_id": oid}, no_embedding_fields)) is not None:
@@ -111,6 +118,8 @@ async def delete_movie(
     delete_result = await db["movies"].delete_one({"_id": oid})
 
     if delete_result.deleted_count == 1:
+        # Cache Invalidation
+        await increment_cache_version()
         return {"message": "Film başarıyla silindi."}
 
     raise HTTPException(status_code=404, detail=f"{id} ID'li film bulunamadı.")

@@ -7,11 +7,15 @@ from app.services.movies.routes import router as movies_router
 from app.services.auth.routes import router as auth_router
 from app.services.reviews.routes import router as reviews_router
 from app.services.agent.router import router as agent_router
+from app.core.redis import connect_to_redis, close_redis_connection
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     
     await connect_to_mongo()
+    await connect_to_redis()
     yield
+    await close_redis_connection()
     await close_mongo_connection()
     
 app = FastAPI(

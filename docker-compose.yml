@@ -1,0 +1,48 @@
+services:
+  # 1. Veritabanı (MongoDB)
+  mongodb:
+    image: mongo:latest
+    container_name: ff-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  # 2. Önbellek (Redis)
+  redis:
+    image: redis:alpine
+    container_name: ff-redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # 3. Backend (FastAPI + LangChain Agent)
+  backend:
+    build: ./backend
+    container_name: ff-backend
+    restart: always
+    # .env dosyasındaki API keyleri buraya çeker
+    env_file:
+      - ./backend/.env
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - mongodb
+      - redis
+    ports:
+      - "8000:8000"
+
+  # 4. Frontend (React + Nginx)
+  frontend:
+    build: ./frontend
+    container_name: ff-frontend
+    restart: always
+    ports:
+      - "80:80" # Tarayıcıdan http://localhost ile erişilir
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:
